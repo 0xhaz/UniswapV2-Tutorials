@@ -1,0 +1,3 @@
+## Uniswap V2: Calculating the Settlement Price of an AMM Swap
+
+This article explains how to determine the price settlement of a trading pair in an Automated Market Maker (AMM). It answers the question of "How many token X can be swapped for token Y from the AMM?".
