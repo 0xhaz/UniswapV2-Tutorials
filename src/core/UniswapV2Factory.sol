@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IUniswapV2Factory} from "../interfaces/IUniswapV2Factory.sol";
+import {IUniswapV2Pair} from "../interfaces/IUniswapV2Pair.sol";
 import {UniswapV2Pair} from "./UniswapV2Pair.sol";
 
 contract UniswapV2Factory is IUniswapV2Factory {
@@ -11,7 +12,7 @@ contract UniswapV2Factory is IUniswapV2Factory {
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
+    // event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
 
     constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
