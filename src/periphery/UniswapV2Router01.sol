@@ -185,7 +185,7 @@ contract UniswapV2Router01 is IUniswapV2Router01 {
             uint256 amountOut = amounts[i + 1];
             (uint256 amount0Out, uint256 amount1Out) =
                 input == token0 ? (uint256(0), amountOut) : (amountOut, uint256(0));
-            address to = i < ppath.length - 2 ? UniswapV2Library.pairFor(factory, outputm, path[i + 2]) : _to;
+            address to = i < path.length - 2 ? UniswapV2Library.pairFor(factory, outputm, path[i + 2]) : _to;
             IUniswapV2Pair(UniswapV2Library.pairFor(factory, input, output)).swap(
                 amount0Out, amount1Out, to, new bytes(0)
             );
