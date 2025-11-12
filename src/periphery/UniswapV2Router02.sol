@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 
 import {IUniswapV2Factory} from "../interfaces/IUniswapV2Factory.sol";
 import {TransferHelper} from "../libraries/TransferHelper.sol";
+import {IUniswapV2Pair} from "../interfaces/IUniswapV2Pair.sol";
 import {IUniswapV2Router02} from "../interfaces/IUniswapV2Router02.sol";
 import {UniswapV2Library} from "../libraries/UniswapV2Library.sol";
-import {SafeMath} from "../utils/SafeMath.sol";
+import {SafeMath} from "../libraries/SafeMath.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 import {IWETH} from "../interfaces/IWETH.sol";
 
@@ -50,10 +51,10 @@ contract UniswapV2Router20 is IUniswapV2Router02 {
                 require(amountBOptimal >= amountBMin, "UniswapV2Router: INSUFFICIENT_B_AMOUNT");
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
-                uint256 amountAOptimal = UniswapV2Library.quoote(amountBDesired, reserveB, reserveA);
+                uint256 amountAOptimal = UniswapV2Library.quote(amountBDesired, reserveB, reserveA);
                 // NOTE: amountBOptimal > amountBDesired so amountAOptimal <= amountADesired
                 assert(amountAOptimal <= amountADesired);
-                require(amountAOptimal >= amountAMint, "UniswapV2Router: INSUFFICIENT_A_AMOUNT");
+                require(amountAOptimal >= amountAMin, "UniswapV2Router: INSUFFICIENT_A_AMOUNT");
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -65,7 +66,7 @@ contract UniswapV2Router20 is IUniswapV2Router02 {
         address tokenB,
         uint256 amountADesired,
         uint256 amountBDesired,
-        uint256 amoutAMin,
+        uint256 amountAMin,
         uint256 amountBMin,
         address to,
         uint256 deadline
@@ -102,7 +103,7 @@ contract UniswapV2Router20 is IUniswapV2Router02 {
         assert(IWETH(WETH).transfer(pair, amountETH));
         liquidity = IUniswapV2Pair(pair).mint(to);
         // refund dust ETH, if any
-        if (msg.value > amountETH) TransferHelper.sasfeTransferETH(msg.sender, msg.value - amountETH);
+        if (msg.value > amountETH) TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
     }
 
     function removeLiquidity(
@@ -153,7 +154,7 @@ contract UniswapV2Router20 is IUniswapV2Router02 {
         bytes32 s
     ) external virtual override returns (uint256 amountA, uint256 amountB) {
         address pair = UniswapV2Library.pairFor(factory, tokenA, tokenB);
-        uint256 value = approveMax ? uint256(-1) : liquidity;
+        uint256 value = approveMax ? type(uint256).max : liquidity;
         IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);
     }
@@ -171,7 +172,7 @@ contract UniswapV2Router20 is IUniswapV2Router02 {
         bytes32 s
     ) external virtual override returns (uint256 amountToken, uint256 amountETH) {
         address pair = UniswapV2Library.pairFor(factory, token, WETH);
-        uint256 value = approveMax ? uint256(-1) : liquidity;
+        uint256 value = approveMax ? type(uint256).max : liquidity;
         IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);
     }
@@ -204,7 +205,7 @@ contract UniswapV2Router20 is IUniswapV2Router02 {
         bytes32 s
     ) external virtual override returns (uint256 amountETH) {
         address pair = UniswapV2Library.pairFor(factory, token, WETH);
-        uint256 value = approveMax ? uint256(-1) : liquidity;
+        uint256 value = approveMax ? type(uint256).max : liquidity;
         IUniswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
             token, liquidity, amountTokenMin, amountETHMin, to, deadline
