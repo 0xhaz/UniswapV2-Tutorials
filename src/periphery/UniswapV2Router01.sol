@@ -262,4 +262,68 @@ contract UniswapV2Router01 is IUniswapV2Router01 {
         IWETH(WETH).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
+
+    function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
+        external
+        payable
+        override
+        ensure(deadline)
+        returns (uint256[] memory amounts)
+    {
+        require(path[0] == WETH, "UniswapV2Router: INVALID_PATH");
+        amounts = UniswapV2Library.getAmountsIn(factory, amountOut, path);
+        require(amounts[0] <= msg.value, "UniswapV2Router: EXCESSIVE_INPUT_INPUT");
+
+        IWETH(WETH).deposit{value: amounts[0]}();
+        assert(IWETH(WETH).transfer(UniswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
+
+        _swap(amounts, path, to);
+
+        if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]); // refund dust eth
+    }
+
+    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB)
+        public
+        pure
+        override
+        returns (uint256 amountB)
+    {
+        return UniswapV2Library.quote(amountA, reserveA, reserveB);
+    }
+
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
+        public
+        pure
+        override
+        returns (uint256 amountOut)
+    {
+        return UniswapV2Library.getAmountOut(amountIn, reserveIn, reserveOut);
+    }
+
+    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
+        public
+        pure
+        override
+        returns (uint256 amountIn)
+    {
+        return UniswapV2Library.getAmountIn(amountOut, reserveIn, reserveOut);
+    }
+
+    function getAmountsOut(uint256 amountIn, address[] calldata path)
+        public
+        view
+        override
+        returns (uint256[] memory amounts)
+    {
+        return UniswapV2Library.getAmountsOut(factory, amountIn, path);
+    }
+
+    function getAmountsIn(uint256 amountOut, address[] calldata path)
+        public
+        view
+        override
+        returns (uint256[] memory amounts)
+    {
+        return UniswapV2Library.getAmountsIn(factory, amountOut, path);
+    }
 }
