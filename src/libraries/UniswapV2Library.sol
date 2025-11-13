@@ -129,6 +129,10 @@ library UniswapV2Library {
         amounts = new uint256[](path.length);
         amounts[0] = amountIn;
 
+        //  WETH 1000000000000000000 (1 * 1e18)
+        //  DAI 3399798446669274345484 (3399.7984... * 1e18)
+        //  MKR 46082848056548101 (0.0460828... * 1e18)
+
         // NOTE: Example
         // --- Inputs ---
         // amountIn = 1e18
