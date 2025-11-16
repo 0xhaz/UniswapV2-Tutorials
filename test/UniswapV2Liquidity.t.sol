@@ -36,8 +36,8 @@ contract UniswapV2LiquidityTest is Test {
         (uint256 amountA, uint256 amountB, uint256 liquidity) = router.addLiquidity({
             tokenA: DAI, // tokenA
             tokenB: WETH, // tokenB
-            amountADesired: 1e6 * 1e18, // 1,000,000 DAI (amountADesired)
-            amountBDesired: 100 ether, // 100 WETH (amountBDesired)
+            amountADesired: 1e6 * 1e18, // 1,000,000 DAI
+            amountBDesired: 100 ether, // 100 WETH
             amountAMin: 1, // amountAMin
             amountBMin: 1, // amountBMin
             to: user, // to
