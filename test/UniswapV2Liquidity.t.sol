@@ -50,4 +50,39 @@ contract UniswapV2LiquidityTest is Test {
 
         assertGt(pair.balanceOf(user), 0);
     }
+
+    function test_removeLiquidity() public {
+        // First, add liquidity
+        vm.prank(user);
+        (,, uint256 liquidity) = router.addLiquidity({
+            tokenA: DAI,
+            tokenB: WETH,
+            amountADesired: 1e6 * 1e18,
+            amountBDesired: 100 ether,
+            amountAMin: 1,
+            amountBMin: 1,
+            to: user,
+            deadline: block.timestamp + 15
+        });
+
+        vm.prank(user);
+        pair.approve(address(router), type(uint256).max);
+
+        // Now, remove liquidity
+        vm.prank(user);
+        (uint256 amountA, uint256 amountB) = router.removeLiquidity({
+            tokenA: DAI,
+            tokenB: WETH,
+            liquidity: liquidity,
+            amountAMin: 1,
+            amountBMin: 1,
+            to: user,
+            deadline: block.timestamp + 15
+        });
+
+        console.log("DAI removed:", amountA);
+        console.log("WETH removed:", amountB);
+
+        assertEq(pair.balanceOf(user), 0);
+    }
 }
