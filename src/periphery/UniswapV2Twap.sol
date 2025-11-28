@@ -54,23 +54,23 @@ contract UniswapV2Twap {
         // if current block timestamp > last timestamp reserves were updated
         // calculate cumulative prices until current time.
         // Otherwise, return latest cumulative prices retrieved from pair contract.
-        
+
         // 2. Get reserves and last timestamp the reserves were updated from pair contract
         (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = pair.getReserves();
-        
+
         // 3. Cast block.timestamp to uint32
-        uint32 blockTimestamp = 0;
-        if(blockTimestampLast != blockTimestamp) {
+        uint32 blockTimestamp = uint32(block.timestamp);
+        if (blockTimestampLast != blockTimestamp) {
             // 4. Calculate elapsed time
-            uint32 dt;
+            uint32 dt = blockTimestamp - blockTimestampLast;
 
             // Addition overflow is desired
-            uncheck {
+            unchecked {
                 // 5. Add spot price * elapsed time to the cumulative prices
                 // - Use FixedPoint.fraction to calculate spot price
                 // - FixedPoint.fraction returns a UQ112x112, so cast it to uint256
                 // - Multiply spot price by time elapsed
-                dt = blockTimestamp - blockTimestampLast;
+
                 price0Cumulative += uint256(FixedPoint.fraction(reserve1, reserve0)._x) * dt;
                 price1Cumulative += uint256(FixedPoint.fraction(reserve0, reserve1)._x) * dt;
             }
@@ -80,17 +80,17 @@ contract UniswapV2Twap {
     // update cumulative prices
     function update() external {
         // 1. Cast block.timestamp to uint32
-        uint32 blockTimestamp = 0;
-        // 2. Calculate elapsed time since last time cumulative prices were 
+        uint32 blockTimestamp = uint32(block.timestamp);
+        // 2. Calculate elapsed time since last time cumulative prices were
         // updated in this contract
-        uint32 dt = 0;
+        uint32 dt = blockTimestamp - updatedAt;
         // 3. Require elapsed time > MIN_WAIT
         require(dt >= MIN_WAIT, "UniswapV2Twap: MIN_WAIT not elapsed");
         // 4. Call the internal function _getCurrentCumulativePrices to get latest
         // cumulative prices from pair contract
         (uint256 price0Cumulative, uint256 price1Cumulative) = _getCurrentCumulativePrices();
-        
-         // Overflow is desired, casting never truncates
+
+        // Overflow is desired, casting never truncates
         // https://docs.uniswap.org/contracts/v2/guides/smart-contract-integration/building-an-oracle
         // Subtracting between two cumulative price values will result in
         // a number that fits within the range of uint256 as long as the
@@ -99,12 +99,8 @@ contract UniswapV2Twap {
             // 5. Calculate TWAP price0Avg and price1Avg
             //    - TWAP = (current cumulative price - last cumulative price) / dt
             //    - Cast TWAP into uint224 and then into FixedPoint.uq112x112
-            price0Avg = FixedPoint.uq112x112(
-                uint224((price0Cumulative - price0CumulativeLast) / dt)
-            );
-            price1Avg = FixedPoint.uq112x112(
-                uint224((price1Cumulative - price1CumulativeLast) / dt)
-            );
+            price0Avg = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / dt));
+            price1Avg = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / dt));
         }
 
         // 6. Update state variables price0CumulativeLast, price1CumulativeLast and updatedAt
@@ -114,18 +110,18 @@ contract UniswapV2Twap {
     }
 
     // Returns the amount out corresponding to the amount in a for a given token
-    function consult(address tokenIn, uint amountIn) external view returns (uint amountOut) {
+    function consult(address tokenIn, uint256 amountIn) external view returns (uint256 amountOut) {
         // 1. Require tokenIn is either token0 or token1
-        tokenIn == token0 ? token0 : token1;
+        require(tokenIn == token0 || tokenIn == token1, "UniswapV2Twap: invalid token");
 
-        // 2. Calculate amountOut 
+        // 2. Calculate amountOut
         // - amountOut = TWAP of tokenIn * amountIn
         // - Use FixedPoint.mul to multiply TWAP of tokenIn with amountIn
         // - FixedPoint.mul returns a UQ144x112, so decode it to uint144
         if (tokenIn == token0) {
             amountOut = price0Avg.mul(amountIn).decode144();
         } else {
-            amountOut = price1Avg.mul(amountIn).decode144();    
+            amountOut = price1Avg.mul(amountIn).decode144();
         }
     }
 }
